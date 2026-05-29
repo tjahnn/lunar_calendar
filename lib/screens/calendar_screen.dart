@@ -482,15 +482,15 @@ class _DayCell extends StatelessWidget {
             child: Text(
               _primaryLabel,
               style: TextStyle(
-                fontSize: 14,
-                fontWeight: (isSelected || _isToday) ? FontWeight.bold : FontWeight.w400,
+                fontSize: 16,
+                fontWeight: (isSelected || _isToday) ? FontWeight.bold : FontWeight.w600,
                 color: _primaryTextColor(context),
               ),
             ),
           ),
           Text(
             _secondaryLabel,
-            style: TextStyle(fontSize: 9, color: _secondaryLabelColor(context)),
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _secondaryLabelColor(context)),
           ),
           SizedBox(
             height: 6,
