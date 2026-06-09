@@ -127,6 +127,17 @@ class $SchedulesTable extends Schedules
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
+  static const VerificationMeta _alarmTimeMeta = const VerificationMeta(
+    'alarmTime',
+  );
+  @override
+  late final GeneratedColumn<String> alarmTime = GeneratedColumn<String>(
+    'alarm_time',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -139,6 +150,7 @@ class $SchedulesTable extends Schedules
     isLeapMonth,
     repeatType,
     repeatInterval,
+    alarmTime,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -225,6 +237,12 @@ class $SchedulesTable extends Schedules
         ),
       );
     }
+    if (data.containsKey('alarm_time')) {
+      context.handle(
+        _alarmTimeMeta,
+        alarmTime.isAcceptableOrUnknown(data['alarm_time']!, _alarmTimeMeta),
+      );
+    }
     return context;
   }
 
@@ -274,6 +292,10 @@ class $SchedulesTable extends Schedules
         DriftSqlType.int,
         data['${effectivePrefix}repeat_interval'],
       )!,
+      alarmTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}alarm_time'],
+      ),
     );
   }
 
@@ -294,6 +316,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
   final bool isLeapMonth;
   final String repeatType;
   final int repeatInterval;
+  final String? alarmTime;
   const Schedule({
     required this.id,
     required this.date,
@@ -305,6 +328,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     required this.isLeapMonth,
     required this.repeatType,
     required this.repeatInterval,
+    this.alarmTime,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -325,6 +349,9 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     map['is_leap_month'] = Variable<bool>(isLeapMonth);
     map['repeat_type'] = Variable<String>(repeatType);
     map['repeat_interval'] = Variable<int>(repeatInterval);
+    if (!nullToAbsent || alarmTime != null) {
+      map['alarm_time'] = Variable<String>(alarmTime);
+    }
     return map;
   }
 
@@ -346,6 +373,9 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       isLeapMonth: Value(isLeapMonth),
       repeatType: Value(repeatType),
       repeatInterval: Value(repeatInterval),
+      alarmTime: alarmTime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(alarmTime),
     );
   }
 
@@ -365,6 +395,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       isLeapMonth: serializer.fromJson<bool>(json['isLeapMonth']),
       repeatType: serializer.fromJson<String>(json['repeatType']),
       repeatInterval: serializer.fromJson<int>(json['repeatInterval']),
+      alarmTime: serializer.fromJson<String?>(json['alarmTime']),
     );
   }
   @override
@@ -381,6 +412,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       'isLeapMonth': serializer.toJson<bool>(isLeapMonth),
       'repeatType': serializer.toJson<String>(repeatType),
       'repeatInterval': serializer.toJson<int>(repeatInterval),
+      'alarmTime': serializer.toJson<String?>(alarmTime),
     };
   }
 
@@ -395,6 +427,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     bool? isLeapMonth,
     String? repeatType,
     int? repeatInterval,
+    Value<String?> alarmTime = const Value.absent(),
   }) => Schedule(
     id: id ?? this.id,
     date: date ?? this.date,
@@ -406,6 +439,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     isLeapMonth: isLeapMonth ?? this.isLeapMonth,
     repeatType: repeatType ?? this.repeatType,
     repeatInterval: repeatInterval ?? this.repeatInterval,
+    alarmTime: alarmTime.present ? alarmTime.value : this.alarmTime,
   );
   Schedule copyWithCompanion(SchedulesCompanion data) {
     return Schedule(
@@ -431,6 +465,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       repeatInterval: data.repeatInterval.present
           ? data.repeatInterval.value
           : this.repeatInterval,
+      alarmTime: data.alarmTime.present ? data.alarmTime.value : this.alarmTime,
     );
   }
 
@@ -446,7 +481,8 @@ class Schedule extends DataClass implements Insertable<Schedule> {
           ..write('lunarDay: $lunarDay, ')
           ..write('isLeapMonth: $isLeapMonth, ')
           ..write('repeatType: $repeatType, ')
-          ..write('repeatInterval: $repeatInterval')
+          ..write('repeatInterval: $repeatInterval, ')
+          ..write('alarmTime: $alarmTime')
           ..write(')'))
         .toString();
   }
@@ -463,6 +499,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     isLeapMonth,
     repeatType,
     repeatInterval,
+    alarmTime,
   );
   @override
   bool operator ==(Object other) =>
@@ -477,7 +514,8 @@ class Schedule extends DataClass implements Insertable<Schedule> {
           other.lunarDay == this.lunarDay &&
           other.isLeapMonth == this.isLeapMonth &&
           other.repeatType == this.repeatType &&
-          other.repeatInterval == this.repeatInterval);
+          other.repeatInterval == this.repeatInterval &&
+          other.alarmTime == this.alarmTime);
 }
 
 class SchedulesCompanion extends UpdateCompanion<Schedule> {
@@ -491,6 +529,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
   final Value<bool> isLeapMonth;
   final Value<String> repeatType;
   final Value<int> repeatInterval;
+  final Value<String?> alarmTime;
   const SchedulesCompanion({
     this.id = const Value.absent(),
     this.date = const Value.absent(),
@@ -502,6 +541,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     this.isLeapMonth = const Value.absent(),
     this.repeatType = const Value.absent(),
     this.repeatInterval = const Value.absent(),
+    this.alarmTime = const Value.absent(),
   });
   SchedulesCompanion.insert({
     this.id = const Value.absent(),
@@ -514,6 +554,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     this.isLeapMonth = const Value.absent(),
     this.repeatType = const Value.absent(),
     this.repeatInterval = const Value.absent(),
+    this.alarmTime = const Value.absent(),
   }) : date = Value(date),
        title = Value(title);
   static Insertable<Schedule> custom({
@@ -527,6 +568,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     Expression<bool>? isLeapMonth,
     Expression<String>? repeatType,
     Expression<int>? repeatInterval,
+    Expression<String>? alarmTime,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -539,6 +581,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
       if (isLeapMonth != null) 'is_leap_month': isLeapMonth,
       if (repeatType != null) 'repeat_type': repeatType,
       if (repeatInterval != null) 'repeat_interval': repeatInterval,
+      if (alarmTime != null) 'alarm_time': alarmTime,
     });
   }
 
@@ -553,6 +596,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     Value<bool>? isLeapMonth,
     Value<String>? repeatType,
     Value<int>? repeatInterval,
+    Value<String?>? alarmTime,
   }) {
     return SchedulesCompanion(
       id: id ?? this.id,
@@ -565,6 +609,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
       isLeapMonth: isLeapMonth ?? this.isLeapMonth,
       repeatType: repeatType ?? this.repeatType,
       repeatInterval: repeatInterval ?? this.repeatInterval,
+      alarmTime: alarmTime ?? this.alarmTime,
     );
   }
 
@@ -601,6 +646,9 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     if (repeatInterval.present) {
       map['repeat_interval'] = Variable<int>(repeatInterval.value);
     }
+    if (alarmTime.present) {
+      map['alarm_time'] = Variable<String>(alarmTime.value);
+    }
     return map;
   }
 
@@ -616,7 +664,8 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
           ..write('lunarDay: $lunarDay, ')
           ..write('isLeapMonth: $isLeapMonth, ')
           ..write('repeatType: $repeatType, ')
-          ..write('repeatInterval: $repeatInterval')
+          ..write('repeatInterval: $repeatInterval, ')
+          ..write('alarmTime: $alarmTime')
           ..write(')'))
         .toString();
   }
@@ -645,6 +694,7 @@ typedef $$SchedulesTableCreateCompanionBuilder =
       Value<bool> isLeapMonth,
       Value<String> repeatType,
       Value<int> repeatInterval,
+      Value<String?> alarmTime,
     });
 typedef $$SchedulesTableUpdateCompanionBuilder =
     SchedulesCompanion Function({
@@ -658,6 +708,7 @@ typedef $$SchedulesTableUpdateCompanionBuilder =
       Value<bool> isLeapMonth,
       Value<String> repeatType,
       Value<int> repeatInterval,
+      Value<String?> alarmTime,
     });
 
 class $$SchedulesTableFilterComposer
@@ -716,6 +767,11 @@ class $$SchedulesTableFilterComposer
 
   ColumnFilters<int> get repeatInterval => $composableBuilder(
     column: $table.repeatInterval,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get alarmTime => $composableBuilder(
+    column: $table.alarmTime,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -778,6 +834,11 @@ class $$SchedulesTableOrderingComposer
     column: $table.repeatInterval,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get alarmTime => $composableBuilder(
+    column: $table.alarmTime,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SchedulesTableAnnotationComposer
@@ -830,6 +891,9 @@ class $$SchedulesTableAnnotationComposer
     column: $table.repeatInterval,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get alarmTime =>
+      $composableBuilder(column: $table.alarmTime, builder: (column) => column);
 }
 
 class $$SchedulesTableTableManager
@@ -870,6 +934,7 @@ class $$SchedulesTableTableManager
                 Value<bool> isLeapMonth = const Value.absent(),
                 Value<String> repeatType = const Value.absent(),
                 Value<int> repeatInterval = const Value.absent(),
+                Value<String?> alarmTime = const Value.absent(),
               }) => SchedulesCompanion(
                 id: id,
                 date: date,
@@ -881,6 +946,7 @@ class $$SchedulesTableTableManager
                 isLeapMonth: isLeapMonth,
                 repeatType: repeatType,
                 repeatInterval: repeatInterval,
+                alarmTime: alarmTime,
               ),
           createCompanionCallback:
               ({
@@ -894,6 +960,7 @@ class $$SchedulesTableTableManager
                 Value<bool> isLeapMonth = const Value.absent(),
                 Value<String> repeatType = const Value.absent(),
                 Value<int> repeatInterval = const Value.absent(),
+                Value<String?> alarmTime = const Value.absent(),
               }) => SchedulesCompanion.insert(
                 id: id,
                 date: date,
@@ -905,6 +972,7 @@ class $$SchedulesTableTableManager
                 isLeapMonth: isLeapMonth,
                 repeatType: repeatType,
                 repeatInterval: repeatInterval,
+                alarmTime: alarmTime,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

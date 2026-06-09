@@ -25,7 +25,7 @@ class _DateDetailPanelState extends State<_DateDetailPanel> {
     _schedulesStream = widget.db.watchSchedulesForDate(widget.selectedDate);
   }
 
-  void _addSchedule({
+  Future<void> _addSchedule({
     required String title,
     String? description,
     bool isLunarDate = false,
@@ -34,21 +34,33 @@ class _DateDetailPanelState extends State<_DateDetailPanel> {
     bool isLeapMonth = false,
     String repeatType = 'none',
     int repeatInterval = 1,
-  }) => widget.db.addSchedule(
-    widget.selectedDate,
-    title,
-    description: description,
-    isLunarDate: isLunarDate,
-    lunarMonth: lunarMonth,
-    lunarDay: lunarDay,
-    isLeapMonth: isLeapMonth,
-    repeatType: repeatType,
-    repeatInterval: repeatInterval,
-  );
+    String? alarmTime,
+  }) async {
+    await widget.db.addSchedule(
+      widget.selectedDate,
+      title,
+      description: description,
+      isLunarDate: isLunarDate,
+      lunarMonth: lunarMonth,
+      lunarDay: lunarDay,
+      isLeapMonth: isLeapMonth,
+      repeatType: repeatType,
+      repeatInterval: repeatInterval,
+      alarmTime: alarmTime,
+    );
+    if (alarmTime != null) {
+      final schedules = await widget.db.select(widget.db.schedules).get();
+      final inserted = schedules.lastWhere((s) => s.title == title && s.alarmTime == alarmTime);
+      await AlarmService.schedule(inserted);
+    }
+  }
 
-  void _deleteSchedule(int id) => widget.db.deleteSchedule(id);
+  Future<void> _deleteSchedule(int id) async {
+    await AlarmService.cancel(id);
+    await widget.db.deleteSchedule(id);
+  }
 
-  void _updateSchedule(
+  Future<void> _updateSchedule(
     int id, {
     required String title,
     String? description,
@@ -58,17 +70,27 @@ class _DateDetailPanelState extends State<_DateDetailPanel> {
     bool isLeapMonth = false,
     String repeatType = 'none',
     int repeatInterval = 1,
-  }) => widget.db.updateSchedule(
-    id,
-    title: title,
-    description: description,
-    isLunarDate: isLunarDate,
-    lunarMonth: lunarMonth,
-    lunarDay: lunarDay,
-    isLeapMonth: isLeapMonth,
-    repeatType: repeatType,
-    repeatInterval: repeatInterval,
-  );
+    String? alarmTime,
+  }) async {
+    await widget.db.updateSchedule(
+      id,
+      title: title,
+      description: description,
+      isLunarDate: isLunarDate,
+      lunarMonth: lunarMonth,
+      lunarDay: lunarDay,
+      isLeapMonth: isLeapMonth,
+      repeatType: repeatType,
+      repeatInterval: repeatInterval,
+      alarmTime: alarmTime,
+    );
+    await AlarmService.cancel(id);
+    if (alarmTime != null) {
+      final schedules = await widget.db.select(widget.db.schedules).get();
+      final updated = schedules.firstWhere((s) => s.id == id);
+      await AlarmService.schedule(updated);
+    }
+  }
 
   void _showAddDialog() {
     showDialog(
@@ -85,6 +107,7 @@ class _DateDetailPanelState extends State<_DateDetailPanel> {
               bool isLeapMonth = false,
               String repeatType = 'none',
               int repeatInterval = 1,
+              String? alarmTime,
             }) => _addSchedule(
               title: title,
               description: description,
@@ -94,6 +117,7 @@ class _DateDetailPanelState extends State<_DateDetailPanel> {
               isLeapMonth: isLeapMonth,
               repeatType: repeatType,
               repeatInterval: repeatInterval,
+              alarmTime: alarmTime,
             ),
       ),
     );
@@ -115,6 +139,7 @@ class _DateDetailPanelState extends State<_DateDetailPanel> {
               bool isLeapMonth = false,
               String repeatType = 'none',
               int repeatInterval = 1,
+              String? alarmTime,
             }) => _updateSchedule(
               s.id,
               title: title,
@@ -125,6 +150,7 @@ class _DateDetailPanelState extends State<_DateDetailPanel> {
               isLeapMonth: isLeapMonth,
               repeatType: repeatType,
               repeatInterval: repeatInterval,
+              alarmTime: alarmTime,
             ),
       ),
     );
@@ -260,7 +286,7 @@ class _DateDetailPanelState extends State<_DateDetailPanel> {
                         IconButton(
                           icon: Icon(Icons.delete_outline, size: 18, color: Colors.grey.shade400),
                           visualDensity: VisualDensity.compact,
-                          onPressed: () => _deleteSchedule(s.id),
+                          onPressed: () async => _deleteSchedule(s.id),
                         ),
                       ],
                     ),

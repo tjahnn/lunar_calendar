@@ -20,6 +20,8 @@ class Schedules extends Table {
       text().withDefault(const Constant('none'))();
   IntColumn get repeatInterval =>
       integer().withDefault(const Constant(1))();
+  // "HH:mm" 형식, null = 알람 없음
+  TextColumn get alarmTime => text().nullable()();
 }
 
 @DriftDatabase(tables: [Schedules])
@@ -27,7 +29,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -42,6 +44,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.addColumn(schedules, schedules.repeatInterval);
+      }
+      if (from < 4) {
+        await m.addColumn(schedules, schedules.alarmTime);
       }
     },
   );
@@ -167,6 +172,7 @@ class AppDatabase extends _$AppDatabase {
     bool isLeapMonth = false,
     String repeatType = 'none',
     int repeatInterval = 1,
+    String? alarmTime,
   }) {
     return into(schedules).insert(
       SchedulesCompanion.insert(
@@ -179,6 +185,7 @@ class AppDatabase extends _$AppDatabase {
         isLeapMonth: Value(isLeapMonth),
         repeatType: Value(repeatType),
         repeatInterval: Value(repeatInterval),
+        alarmTime: Value(alarmTime),
       ),
     );
   }
@@ -193,6 +200,7 @@ class AppDatabase extends _$AppDatabase {
     bool isLeapMonth = false,
     String repeatType = 'none',
     int repeatInterval = 1,
+    String? alarmTime,
   }) {
     return (update(schedules)..where((t) => t.id.equals(id))).write(
       SchedulesCompanion(
@@ -204,6 +212,7 @@ class AppDatabase extends _$AppDatabase {
         isLeapMonth: Value(isLeapMonth),
         repeatType: Value(repeatType),
         repeatInterval: Value(repeatInterval),
+        alarmTime: Value(alarmTime),
       ),
     );
   }

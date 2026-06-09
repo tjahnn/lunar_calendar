@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'database/app_database.dart';
 import 'screens/calendar_screen.dart';
+import 'services/alarm_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AlarmService.initialize();
   runApp(MyApp(db: AppDatabase()));
 }
 

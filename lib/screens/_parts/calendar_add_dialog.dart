@@ -16,6 +16,7 @@ class _AddScheduleDialog extends StatefulWidget {
     bool isLeapMonth,
     String repeatType,
     int repeatInterval,
+    String? alarmTime,
   })
   onSubmit;
 
@@ -36,6 +37,7 @@ class _AddScheduleDialogState extends State<_AddScheduleDialog> {
   bool _isLunarDate = false;
   String _repeatType = 'none';
   int _repeatInterval = 1;
+  TimeOfDay? _alarmTime;
 
   late final int _lunarYear;
   late final int _lunarMonth;
@@ -62,6 +64,10 @@ class _AddScheduleDialogState extends State<_AddScheduleDialog> {
       _repeatType = s.repeatType;
       _repeatInterval = s.repeatInterval;
       _intervalController.text = s.repeatInterval.toString();
+      if (s.alarmTime != null) {
+        final parts = s.alarmTime!.split(':');
+        _alarmTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+      }
     }
     klc.setSolarDate(widget.selectedDate.year, widget.selectedDate.month, widget.selectedDate.day);
     _lunarYear = klc.getLunarYear();
@@ -92,6 +98,9 @@ class _AddScheduleDialogState extends State<_AddScheduleDialog> {
       isLeapMonth: _isLunarDate ? _isLeapMonth : false,
       repeatType: _repeatType,
       repeatInterval: _repeatInterval,
+      alarmTime: _alarmTime == null
+          ? null
+          : '${_alarmTime!.hour.toString().padLeft(2, '0')}:${_alarmTime!.minute.toString().padLeft(2, '0')}',
     );
     Navigator.pop(context);
   }
@@ -212,6 +221,34 @@ class _AddScheduleDialogState extends State<_AddScheduleDialog> {
                       },
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text('알람', style: theme.textTheme.labelMedium?.copyWith(color: Colors.black54)),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.alarm, size: 16),
+                    label: Text(
+                      _alarmTime == null ? '알람 없음' : _alarmTime!.format(context),
+                    ),
+                    onPressed: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: _alarmTime ?? TimeOfDay.now(),
+                      );
+                      if (picked != null) setState(() => _alarmTime = picked);
+                    },
+                  ),
+                  if (_alarmTime != null) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 16),
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => setState(() => _alarmTime = null),
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 20),
