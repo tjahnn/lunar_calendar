@@ -40,8 +40,106 @@ class $SchedulesTable extends Schedules
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, date, title];
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isLunarDateMeta = const VerificationMeta(
+    'isLunarDate',
+  );
+  @override
+  late final GeneratedColumn<bool> isLunarDate = GeneratedColumn<bool>(
+    'is_lunar_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_lunar_date" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _lunarMonthMeta = const VerificationMeta(
+    'lunarMonth',
+  );
+  @override
+  late final GeneratedColumn<int> lunarMonth = GeneratedColumn<int>(
+    'lunar_month',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lunarDayMeta = const VerificationMeta(
+    'lunarDay',
+  );
+  @override
+  late final GeneratedColumn<int> lunarDay = GeneratedColumn<int>(
+    'lunar_day',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isLeapMonthMeta = const VerificationMeta(
+    'isLeapMonth',
+  );
+  @override
+  late final GeneratedColumn<bool> isLeapMonth = GeneratedColumn<bool>(
+    'is_leap_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_leap_month" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _repeatTypeMeta = const VerificationMeta(
+    'repeatType',
+  );
+  @override
+  late final GeneratedColumn<String> repeatType = GeneratedColumn<String>(
+    'repeat_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('none'),
+  );
+  static const VerificationMeta _repeatIntervalMeta = const VerificationMeta(
+    'repeatInterval',
+  );
+  @override
+  late final GeneratedColumn<int> repeatInterval = GeneratedColumn<int>(
+    'repeat_interval',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    date,
+    title,
+    description,
+    isLunarDate,
+    lunarMonth,
+    lunarDay,
+    isLeapMonth,
+    repeatType,
+    repeatInterval,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -73,6 +171,60 @@ class $SchedulesTable extends Schedules
     } else if (isInserting) {
       context.missing(_titleMeta);
     }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_lunar_date')) {
+      context.handle(
+        _isLunarDateMeta,
+        isLunarDate.isAcceptableOrUnknown(
+          data['is_lunar_date']!,
+          _isLunarDateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('lunar_month')) {
+      context.handle(
+        _lunarMonthMeta,
+        lunarMonth.isAcceptableOrUnknown(data['lunar_month']!, _lunarMonthMeta),
+      );
+    }
+    if (data.containsKey('lunar_day')) {
+      context.handle(
+        _lunarDayMeta,
+        lunarDay.isAcceptableOrUnknown(data['lunar_day']!, _lunarDayMeta),
+      );
+    }
+    if (data.containsKey('is_leap_month')) {
+      context.handle(
+        _isLeapMonthMeta,
+        isLeapMonth.isAcceptableOrUnknown(
+          data['is_leap_month']!,
+          _isLeapMonthMeta,
+        ),
+      );
+    }
+    if (data.containsKey('repeat_type')) {
+      context.handle(
+        _repeatTypeMeta,
+        repeatType.isAcceptableOrUnknown(data['repeat_type']!, _repeatTypeMeta),
+      );
+    }
+    if (data.containsKey('repeat_interval')) {
+      context.handle(
+        _repeatIntervalMeta,
+        repeatInterval.isAcceptableOrUnknown(
+          data['repeat_interval']!,
+          _repeatIntervalMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -94,6 +246,34 @@ class $SchedulesTable extends Schedules
         DriftSqlType.string,
         data['${effectivePrefix}title'],
       )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
+      isLunarDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_lunar_date'],
+      )!,
+      lunarMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}lunar_month'],
+      ),
+      lunarDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}lunar_day'],
+      ),
+      isLeapMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_leap_month'],
+      )!,
+      repeatType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}repeat_type'],
+      )!,
+      repeatInterval: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}repeat_interval'],
+      )!,
     );
   }
 
@@ -107,13 +287,44 @@ class Schedule extends DataClass implements Insertable<Schedule> {
   final int id;
   final DateTime date;
   final String title;
-  const Schedule({required this.id, required this.date, required this.title});
+  final String? description;
+  final bool isLunarDate;
+  final int? lunarMonth;
+  final int? lunarDay;
+  final bool isLeapMonth;
+  final String repeatType;
+  final int repeatInterval;
+  const Schedule({
+    required this.id,
+    required this.date,
+    required this.title,
+    this.description,
+    required this.isLunarDate,
+    this.lunarMonth,
+    this.lunarDay,
+    required this.isLeapMonth,
+    required this.repeatType,
+    required this.repeatInterval,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['date'] = Variable<DateTime>(date);
     map['title'] = Variable<String>(title);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
+    map['is_lunar_date'] = Variable<bool>(isLunarDate);
+    if (!nullToAbsent || lunarMonth != null) {
+      map['lunar_month'] = Variable<int>(lunarMonth);
+    }
+    if (!nullToAbsent || lunarDay != null) {
+      map['lunar_day'] = Variable<int>(lunarDay);
+    }
+    map['is_leap_month'] = Variable<bool>(isLeapMonth);
+    map['repeat_type'] = Variable<String>(repeatType);
+    map['repeat_interval'] = Variable<int>(repeatInterval);
     return map;
   }
 
@@ -122,6 +333,19 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       id: Value(id),
       date: Value(date),
       title: Value(title),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
+      isLunarDate: Value(isLunarDate),
+      lunarMonth: lunarMonth == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lunarMonth),
+      lunarDay: lunarDay == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lunarDay),
+      isLeapMonth: Value(isLeapMonth),
+      repeatType: Value(repeatType),
+      repeatInterval: Value(repeatInterval),
     );
   }
 
@@ -134,6 +358,13 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       id: serializer.fromJson<int>(json['id']),
       date: serializer.fromJson<DateTime>(json['date']),
       title: serializer.fromJson<String>(json['title']),
+      description: serializer.fromJson<String?>(json['description']),
+      isLunarDate: serializer.fromJson<bool>(json['isLunarDate']),
+      lunarMonth: serializer.fromJson<int?>(json['lunarMonth']),
+      lunarDay: serializer.fromJson<int?>(json['lunarDay']),
+      isLeapMonth: serializer.fromJson<bool>(json['isLeapMonth']),
+      repeatType: serializer.fromJson<String>(json['repeatType']),
+      repeatInterval: serializer.fromJson<int>(json['repeatInterval']),
     );
   }
   @override
@@ -143,19 +374,63 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       'id': serializer.toJson<int>(id),
       'date': serializer.toJson<DateTime>(date),
       'title': serializer.toJson<String>(title),
+      'description': serializer.toJson<String?>(description),
+      'isLunarDate': serializer.toJson<bool>(isLunarDate),
+      'lunarMonth': serializer.toJson<int?>(lunarMonth),
+      'lunarDay': serializer.toJson<int?>(lunarDay),
+      'isLeapMonth': serializer.toJson<bool>(isLeapMonth),
+      'repeatType': serializer.toJson<String>(repeatType),
+      'repeatInterval': serializer.toJson<int>(repeatInterval),
     };
   }
 
-  Schedule copyWith({int? id, DateTime? date, String? title}) => Schedule(
+  Schedule copyWith({
+    int? id,
+    DateTime? date,
+    String? title,
+    Value<String?> description = const Value.absent(),
+    bool? isLunarDate,
+    Value<int?> lunarMonth = const Value.absent(),
+    Value<int?> lunarDay = const Value.absent(),
+    bool? isLeapMonth,
+    String? repeatType,
+    int? repeatInterval,
+  }) => Schedule(
     id: id ?? this.id,
     date: date ?? this.date,
     title: title ?? this.title,
+    description: description.present ? description.value : this.description,
+    isLunarDate: isLunarDate ?? this.isLunarDate,
+    lunarMonth: lunarMonth.present ? lunarMonth.value : this.lunarMonth,
+    lunarDay: lunarDay.present ? lunarDay.value : this.lunarDay,
+    isLeapMonth: isLeapMonth ?? this.isLeapMonth,
+    repeatType: repeatType ?? this.repeatType,
+    repeatInterval: repeatInterval ?? this.repeatInterval,
   );
   Schedule copyWithCompanion(SchedulesCompanion data) {
     return Schedule(
       id: data.id.present ? data.id.value : this.id,
       date: data.date.present ? data.date.value : this.date,
       title: data.title.present ? data.title.value : this.title,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      isLunarDate: data.isLunarDate.present
+          ? data.isLunarDate.value
+          : this.isLunarDate,
+      lunarMonth: data.lunarMonth.present
+          ? data.lunarMonth.value
+          : this.lunarMonth,
+      lunarDay: data.lunarDay.present ? data.lunarDay.value : this.lunarDay,
+      isLeapMonth: data.isLeapMonth.present
+          ? data.isLeapMonth.value
+          : this.isLeapMonth,
+      repeatType: data.repeatType.present
+          ? data.repeatType.value
+          : this.repeatType,
+      repeatInterval: data.repeatInterval.present
+          ? data.repeatInterval.value
+          : this.repeatInterval,
     );
   }
 
@@ -164,46 +439,106 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     return (StringBuffer('Schedule(')
           ..write('id: $id, ')
           ..write('date: $date, ')
-          ..write('title: $title')
+          ..write('title: $title, ')
+          ..write('description: $description, ')
+          ..write('isLunarDate: $isLunarDate, ')
+          ..write('lunarMonth: $lunarMonth, ')
+          ..write('lunarDay: $lunarDay, ')
+          ..write('isLeapMonth: $isLeapMonth, ')
+          ..write('repeatType: $repeatType, ')
+          ..write('repeatInterval: $repeatInterval')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, date, title);
+  int get hashCode => Object.hash(
+    id,
+    date,
+    title,
+    description,
+    isLunarDate,
+    lunarMonth,
+    lunarDay,
+    isLeapMonth,
+    repeatType,
+    repeatInterval,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Schedule &&
           other.id == this.id &&
           other.date == this.date &&
-          other.title == this.title);
+          other.title == this.title &&
+          other.description == this.description &&
+          other.isLunarDate == this.isLunarDate &&
+          other.lunarMonth == this.lunarMonth &&
+          other.lunarDay == this.lunarDay &&
+          other.isLeapMonth == this.isLeapMonth &&
+          other.repeatType == this.repeatType &&
+          other.repeatInterval == this.repeatInterval);
 }
 
 class SchedulesCompanion extends UpdateCompanion<Schedule> {
   final Value<int> id;
   final Value<DateTime> date;
   final Value<String> title;
+  final Value<String?> description;
+  final Value<bool> isLunarDate;
+  final Value<int?> lunarMonth;
+  final Value<int?> lunarDay;
+  final Value<bool> isLeapMonth;
+  final Value<String> repeatType;
+  final Value<int> repeatInterval;
   const SchedulesCompanion({
     this.id = const Value.absent(),
     this.date = const Value.absent(),
     this.title = const Value.absent(),
+    this.description = const Value.absent(),
+    this.isLunarDate = const Value.absent(),
+    this.lunarMonth = const Value.absent(),
+    this.lunarDay = const Value.absent(),
+    this.isLeapMonth = const Value.absent(),
+    this.repeatType = const Value.absent(),
+    this.repeatInterval = const Value.absent(),
   });
   SchedulesCompanion.insert({
     this.id = const Value.absent(),
     required DateTime date,
     required String title,
+    this.description = const Value.absent(),
+    this.isLunarDate = const Value.absent(),
+    this.lunarMonth = const Value.absent(),
+    this.lunarDay = const Value.absent(),
+    this.isLeapMonth = const Value.absent(),
+    this.repeatType = const Value.absent(),
+    this.repeatInterval = const Value.absent(),
   }) : date = Value(date),
        title = Value(title);
   static Insertable<Schedule> custom({
     Expression<int>? id,
     Expression<DateTime>? date,
     Expression<String>? title,
+    Expression<String>? description,
+    Expression<bool>? isLunarDate,
+    Expression<int>? lunarMonth,
+    Expression<int>? lunarDay,
+    Expression<bool>? isLeapMonth,
+    Expression<String>? repeatType,
+    Expression<int>? repeatInterval,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (date != null) 'date': date,
       if (title != null) 'title': title,
+      if (description != null) 'description': description,
+      if (isLunarDate != null) 'is_lunar_date': isLunarDate,
+      if (lunarMonth != null) 'lunar_month': lunarMonth,
+      if (lunarDay != null) 'lunar_day': lunarDay,
+      if (isLeapMonth != null) 'is_leap_month': isLeapMonth,
+      if (repeatType != null) 'repeat_type': repeatType,
+      if (repeatInterval != null) 'repeat_interval': repeatInterval,
     });
   }
 
@@ -211,11 +546,25 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     Value<int>? id,
     Value<DateTime>? date,
     Value<String>? title,
+    Value<String?>? description,
+    Value<bool>? isLunarDate,
+    Value<int?>? lunarMonth,
+    Value<int?>? lunarDay,
+    Value<bool>? isLeapMonth,
+    Value<String>? repeatType,
+    Value<int>? repeatInterval,
   }) {
     return SchedulesCompanion(
       id: id ?? this.id,
       date: date ?? this.date,
       title: title ?? this.title,
+      description: description ?? this.description,
+      isLunarDate: isLunarDate ?? this.isLunarDate,
+      lunarMonth: lunarMonth ?? this.lunarMonth,
+      lunarDay: lunarDay ?? this.lunarDay,
+      isLeapMonth: isLeapMonth ?? this.isLeapMonth,
+      repeatType: repeatType ?? this.repeatType,
+      repeatInterval: repeatInterval ?? this.repeatInterval,
     );
   }
 
@@ -231,6 +580,27 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     if (title.present) {
       map['title'] = Variable<String>(title.value);
     }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (isLunarDate.present) {
+      map['is_lunar_date'] = Variable<bool>(isLunarDate.value);
+    }
+    if (lunarMonth.present) {
+      map['lunar_month'] = Variable<int>(lunarMonth.value);
+    }
+    if (lunarDay.present) {
+      map['lunar_day'] = Variable<int>(lunarDay.value);
+    }
+    if (isLeapMonth.present) {
+      map['is_leap_month'] = Variable<bool>(isLeapMonth.value);
+    }
+    if (repeatType.present) {
+      map['repeat_type'] = Variable<String>(repeatType.value);
+    }
+    if (repeatInterval.present) {
+      map['repeat_interval'] = Variable<int>(repeatInterval.value);
+    }
     return map;
   }
 
@@ -239,7 +609,14 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     return (StringBuffer('SchedulesCompanion(')
           ..write('id: $id, ')
           ..write('date: $date, ')
-          ..write('title: $title')
+          ..write('title: $title, ')
+          ..write('description: $description, ')
+          ..write('isLunarDate: $isLunarDate, ')
+          ..write('lunarMonth: $lunarMonth, ')
+          ..write('lunarDay: $lunarDay, ')
+          ..write('isLeapMonth: $isLeapMonth, ')
+          ..write('repeatType: $repeatType, ')
+          ..write('repeatInterval: $repeatInterval')
           ..write(')'))
         .toString();
   }
@@ -261,12 +638,26 @@ typedef $$SchedulesTableCreateCompanionBuilder =
       Value<int> id,
       required DateTime date,
       required String title,
+      Value<String?> description,
+      Value<bool> isLunarDate,
+      Value<int?> lunarMonth,
+      Value<int?> lunarDay,
+      Value<bool> isLeapMonth,
+      Value<String> repeatType,
+      Value<int> repeatInterval,
     });
 typedef $$SchedulesTableUpdateCompanionBuilder =
     SchedulesCompanion Function({
       Value<int> id,
       Value<DateTime> date,
       Value<String> title,
+      Value<String?> description,
+      Value<bool> isLunarDate,
+      Value<int?> lunarMonth,
+      Value<int?> lunarDay,
+      Value<bool> isLeapMonth,
+      Value<String> repeatType,
+      Value<int> repeatInterval,
     });
 
 class $$SchedulesTableFilterComposer
@@ -290,6 +681,41 @@ class $$SchedulesTableFilterComposer
 
   ColumnFilters<String> get title => $composableBuilder(
     column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isLunarDate => $composableBuilder(
+    column: $table.isLunarDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lunarMonth => $composableBuilder(
+    column: $table.lunarMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lunarDay => $composableBuilder(
+    column: $table.lunarDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isLeapMonth => $composableBuilder(
+    column: $table.isLeapMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get repeatType => $composableBuilder(
+    column: $table.repeatType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get repeatInterval => $composableBuilder(
+    column: $table.repeatInterval,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -317,6 +743,41 @@ class $$SchedulesTableOrderingComposer
     column: $table.title,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isLunarDate => $composableBuilder(
+    column: $table.isLunarDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lunarMonth => $composableBuilder(
+    column: $table.lunarMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lunarDay => $composableBuilder(
+    column: $table.lunarDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isLeapMonth => $composableBuilder(
+    column: $table.isLeapMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get repeatType => $composableBuilder(
+    column: $table.repeatType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get repeatInterval => $composableBuilder(
+    column: $table.repeatInterval,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SchedulesTableAnnotationComposer
@@ -336,6 +797,39 @@ class $$SchedulesTableAnnotationComposer
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isLunarDate => $composableBuilder(
+    column: $table.isLunarDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lunarMonth => $composableBuilder(
+    column: $table.lunarMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lunarDay =>
+      $composableBuilder(column: $table.lunarDay, builder: (column) => column);
+
+  GeneratedColumn<bool> get isLeapMonth => $composableBuilder(
+    column: $table.isLeapMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get repeatType => $composableBuilder(
+    column: $table.repeatType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get repeatInterval => $composableBuilder(
+    column: $table.repeatInterval,
+    builder: (column) => column,
+  );
 }
 
 class $$SchedulesTableTableManager
@@ -369,13 +863,49 @@ class $$SchedulesTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
                 Value<String> title = const Value.absent(),
-              }) => SchedulesCompanion(id: id, date: date, title: title),
+                Value<String?> description = const Value.absent(),
+                Value<bool> isLunarDate = const Value.absent(),
+                Value<int?> lunarMonth = const Value.absent(),
+                Value<int?> lunarDay = const Value.absent(),
+                Value<bool> isLeapMonth = const Value.absent(),
+                Value<String> repeatType = const Value.absent(),
+                Value<int> repeatInterval = const Value.absent(),
+              }) => SchedulesCompanion(
+                id: id,
+                date: date,
+                title: title,
+                description: description,
+                isLunarDate: isLunarDate,
+                lunarMonth: lunarMonth,
+                lunarDay: lunarDay,
+                isLeapMonth: isLeapMonth,
+                repeatType: repeatType,
+                repeatInterval: repeatInterval,
+              ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required DateTime date,
                 required String title,
-              }) => SchedulesCompanion.insert(id: id, date: date, title: title),
+                Value<String?> description = const Value.absent(),
+                Value<bool> isLunarDate = const Value.absent(),
+                Value<int?> lunarMonth = const Value.absent(),
+                Value<int?> lunarDay = const Value.absent(),
+                Value<bool> isLeapMonth = const Value.absent(),
+                Value<String> repeatType = const Value.absent(),
+                Value<int> repeatInterval = const Value.absent(),
+              }) => SchedulesCompanion.insert(
+                id: id,
+                date: date,
+                title: title,
+                description: description,
+                isLunarDate: isLunarDate,
+                lunarMonth: lunarMonth,
+                lunarDay: lunarDay,
+                isLeapMonth: isLeapMonth,
+                repeatType: repeatType,
+                repeatInterval: repeatInterval,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),

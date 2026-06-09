@@ -4,6 +4,8 @@ import '../database/app_database.dart';
 
 enum CalendarMode { solar, lunar }
 
+enum _ViewLevel { year, month }
+
 class _CalendarDay {
   final DateTime solarDate;
   final int lunarMonth;
@@ -36,6 +38,7 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   late DateTime _focusedMonth;
   CalendarMode _mode = CalendarMode.solar;
+  _ViewLevel _viewLevel = _ViewLevel.month;
   final DateTime _today = DateTime.now();
   DateTime? _selectedDate;
 
@@ -53,23 +56,38 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   void _goPrev() => setState(() {
     _slideDir = -1;
-    _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1);
+    if (_viewLevel == _ViewLevel.year) {
+      _focusedMonth = DateTime(_focusedMonth.year - 1, _focusedMonth.month);
+    } else {
+      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1);
+    }
   });
 
   void _goNext() => setState(() {
     _slideDir = 1;
-    _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1);
+    if (_viewLevel == _ViewLevel.year) {
+      _focusedMonth = DateTime(_focusedMonth.year + 1, _focusedMonth.month);
+    } else {
+      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1);
+    }
   });
 
   void _goToday() {
     final target = DateTime(_today.year, _today.month);
-    final alreadyHere = _focusedMonth.year == target.year && _focusedMonth.month == target.month;
-    if (alreadyHere) return;
     setState(() {
+      _viewLevel = _ViewLevel.month;
       _slideDir = _focusedMonth.isBefore(target) ? 1 : -1;
       _focusedMonth = target;
+      _selectedDate = _today;
     });
   }
+
+  void _goYearView() => setState(() => _viewLevel = _ViewLevel.year);
+
+  void _onMonthSelected(DateTime month) => setState(() {
+    _focusedMonth = month;
+    _viewLevel = _ViewLevel.month;
+  });
 
   void _onDaySelected(DateTime date) {
     setState(() {
@@ -113,12 +131,36 @@ class _CalendarScreenState extends State<CalendarScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: IconButton(
-          icon: const Icon(Icons.today, color: Colors.black87),
-          tooltip: '오늘',
-          onPressed: _goToday,
-        ),
-        actions: [_ModeToggle(mode: _mode, onChanged: (m) => setState(() => _mode = m))],
+        leading: _viewLevel == _ViewLevel.month
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.black87),
+                tooltip: '월 목록',
+                onPressed: _goYearView,
+              )
+            : null,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.today, color: Colors.black87),
+                    tooltip: '오늘',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: _goToday,
+                  ),
+                  _ModeToggle(mode: _mode, onChanged: (m) => setState(() => _mode = m)),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: Container(
         height: 60,
@@ -132,50 +174,59 @@ class _CalendarScreenState extends State<CalendarScreen> {
           style: TextStyle(fontSize: 11, color: Colors.grey.shade400, letterSpacing: 1.5),
         ),
       ),
-      body: Column(
-        children: [
-          // ── 달력 영역 (스와이프 감지 + 슬라이드 애니메이션) ──
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onVerticalDragEnd: (details) {
-              final v = details.primaryVelocity ?? 0;
-              if (v < -200) {
-                _goNext();
-              } else if (v > 200) {
-                _goPrev();
-              }
-            },
-            child: ClipRect(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 280),
-                transitionBuilder: _transitionBuilder,
-                layoutBuilder: (current, previous) =>
-                    Stack(alignment: Alignment.topLeft, children: [...previous, ?current]),
-                child: _CalendarMonthView(
-                  key: ValueKey(_focusedMonth),
-                  month: _focusedMonth,
-                  db: widget.db,
-                  mode: _mode,
-                  today: _today,
-                  selectedDate: _selectedDate,
-                  onDaySelected: _onDaySelected,
+      body: _viewLevel == _ViewLevel.year
+          ? _CalendarYearView(
+              year: _focusedMonth.year,
+              month: _focusedMonth.month,
+              mode: _mode,
+              today: _today,
+              db: widget.db,
+              onMonthSelected: _onMonthSelected,
+            )
+          : Column(
+              children: [
+                // ── 달력 영역 (스와이프 감지 + 슬라이드 애니메이션) ──
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onVerticalDragEnd: (details) {
+                    final v = details.primaryVelocity ?? 0;
+                    if (v < -200) {
+                      _goNext();
+                    } else if (v > 200) {
+                      _goPrev();
+                    }
+                  },
+                  child: ClipRect(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 280),
+                      transitionBuilder: _transitionBuilder,
+                      layoutBuilder: (current, previous) =>
+                          Stack(alignment: Alignment.topLeft, children: [...previous, ?current]),
+                      child: _CalendarMonthView(
+                        key: ValueKey(_focusedMonth),
+                        month: _focusedMonth,
+                        db: widget.db,
+                        mode: _mode,
+                        today: _today,
+                        selectedDate: _selectedDate,
+                        onDaySelected: _onDaySelected,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                const Divider(height: 1, thickness: 0.5),
+                // ── 날짜 상세 / 일정 영역 ──
+                Expanded(
+                  child: _selectedDate != null
+                      ? _DateDetailPanel(
+                          key: ValueKey(_selectedDate!.toIso8601String()),
+                          selectedDate: _selectedDate!,
+                          db: widget.db,
+                        )
+                      : const _EmptyDetailState(),
+                ),
+              ],
             ),
-          ),
-          const Divider(height: 1, thickness: 0.5),
-          // ── 날짜 상세 / 일정 영역 ──
-          Expanded(
-            child: _selectedDate != null
-                ? _DateDetailPanel(
-                    key: ValueKey(_selectedDate!.toIso8601String()),
-                    selectedDate: _selectedDate!,
-                    db: widget.db,
-                  )
-                : const _EmptyDetailState(),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -490,7 +541,11 @@ class _DayCell extends StatelessWidget {
           ),
           Text(
             _secondaryLabel,
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _secondaryLabelColor(context)),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: _secondaryLabelColor(context),
+            ),
           ),
           SizedBox(
             height: 6,
@@ -524,6 +579,7 @@ class _ModeToggle extends StatelessWidget {
     final isLunar = mode == CalendarMode.lunar;
     return IconButton(
       tooltip: isLunar ? '양력으로 전환' : '음력으로 전환',
+      visualDensity: VisualDensity.compact,
       onPressed: () => onChanged(isLunar ? CalendarMode.solar : CalendarMode.lunar),
       icon: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
@@ -569,40 +625,107 @@ class _DateDetailPanelState extends State<_DateDetailPanel> {
     _schedulesStream = widget.db.watchSchedulesForDate(widget.selectedDate);
   }
 
-  void _addSchedule(String title) => widget.db.addSchedule(widget.selectedDate, title);
+  void _addSchedule({
+    required String title,
+    String? description,
+    bool isLunarDate = false,
+    int? lunarMonth,
+    int? lunarDay,
+    bool isLeapMonth = false,
+    String repeatType = 'none',
+    int repeatInterval = 1,
+  }) => widget.db.addSchedule(
+    widget.selectedDate,
+    title,
+    description: description,
+    isLunarDate: isLunarDate,
+    lunarMonth: lunarMonth,
+    lunarDay: lunarDay,
+    isLeapMonth: isLeapMonth,
+    repeatType: repeatType,
+    repeatInterval: repeatInterval,
+  );
 
   void _deleteSchedule(int id) => widget.db.deleteSchedule(id);
 
+  void _updateSchedule(
+    int id, {
+    required String title,
+    String? description,
+    bool isLunarDate = false,
+    int? lunarMonth,
+    int? lunarDay,
+    bool isLeapMonth = false,
+    String repeatType = 'none',
+    int repeatInterval = 1,
+  }) => widget.db.updateSchedule(
+    id,
+    title: title,
+    description: description,
+    isLunarDate: isLunarDate,
+    lunarMonth: lunarMonth,
+    lunarDay: lunarDay,
+    isLeapMonth: isLeapMonth,
+    repeatType: repeatType,
+    repeatInterval: repeatInterval,
+  );
+
   void _showAddDialog() {
-    final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('일정 추가'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(hintText: '일정 내용을 입력하세요', border: OutlineInputBorder()),
-          onSubmitted: (v) {
-            if (v.trim().isNotEmpty) {
-              _addSchedule(v.trim());
-              Navigator.pop(ctx);
-            }
-          },
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
-          FilledButton(
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                _addSchedule(controller.text.trim());
-                Navigator.pop(ctx);
-              }
-            },
-            child: const Text('추가'),
-          ),
-        ],
+      builder: (ctx) => _AddScheduleDialog(
+        selectedDate: widget.selectedDate,
+        onSubmit:
+            ({
+              required String title,
+              String? description,
+              bool isLunarDate = false,
+              int? lunarMonth,
+              int? lunarDay,
+              bool isLeapMonth = false,
+              String repeatType = 'none',
+              int repeatInterval = 1,
+            }) => _addSchedule(
+              title: title,
+              description: description,
+              isLunarDate: isLunarDate,
+              lunarMonth: lunarMonth,
+              lunarDay: lunarDay,
+              isLeapMonth: isLeapMonth,
+              repeatType: repeatType,
+              repeatInterval: repeatInterval,
+            ),
+      ),
+    );
+  }
+
+  void _showEditDialog(Schedule s) {
+    showDialog(
+      context: context,
+      builder: (ctx) => _AddScheduleDialog(
+        selectedDate: s.date,
+        initialSchedule: s,
+        onSubmit:
+            ({
+              required String title,
+              String? description,
+              bool isLunarDate = false,
+              int? lunarMonth,
+              int? lunarDay,
+              bool isLeapMonth = false,
+              String repeatType = 'none',
+              int repeatInterval = 1,
+            }) => _updateSchedule(
+              s.id,
+              title: title,
+              description: description,
+              isLunarDate: isLunarDate,
+              lunarMonth: lunarMonth,
+              lunarDay: lunarDay,
+              isLeapMonth: isLeapMonth,
+              repeatType: repeatType,
+              repeatInterval: repeatInterval,
+            ),
       ),
     );
   }
@@ -694,10 +817,52 @@ class _DateDetailPanelState extends State<_DateDetailPanel> {
                   return ListTile(
                     dense: true,
                     leading: Icon(Icons.circle, size: 7, color: Colors.red.shade400),
-                    title: Text(s.title, style: const TextStyle(fontSize: 14)),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete_outline, size: 18, color: Colors.grey.shade400),
-                      onPressed: () => _deleteSchedule(s.id),
+                    title: Row(
+                      children: [
+                        if (s.isLunarDate)
+                          Container(
+                            margin: const EdgeInsets.only(right: 5),
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(3),
+                              border: Border.all(color: Colors.blue.shade200),
+                            ),
+                            child: Text(
+                              '음',
+                              style: TextStyle(fontSize: 9, color: Colors.blue.shade700),
+                            ),
+                          ),
+                        Expanded(child: Text(s.title, style: const TextStyle(fontSize: 14))),
+                      ],
+                    ),
+                    subtitle: s.description != null
+                        ? Text(
+                            s.description!,
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : null,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (s.repeatType != 'none')
+                          Padding(
+                            padding: const EdgeInsets.only(right: 2),
+                            child: Icon(Icons.repeat, size: 14, color: Colors.orange.shade400),
+                          ),
+                        IconButton(
+                          icon: Icon(Icons.edit_outlined, size: 18, color: Colors.grey.shade400),
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => _showEditDialog(s),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete_outline, size: 18, color: Colors.grey.shade400),
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => _deleteSchedule(s.id),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -706,6 +871,240 @@ class _DateDetailPanelState extends State<_DateDetailPanel> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ──────────────────────────────────────────────
+// _AddScheduleDialog
+// ──────────────────────────────────────────────
+
+class _AddScheduleDialog extends StatefulWidget {
+  final DateTime selectedDate;
+  final Schedule? initialSchedule;
+  final void Function({
+    required String title,
+    String? description,
+    bool isLunarDate,
+    int? lunarMonth,
+    int? lunarDay,
+    bool isLeapMonth,
+    String repeatType,
+    int repeatInterval,
+  })
+  onSubmit;
+
+  const _AddScheduleDialog({
+    required this.selectedDate,
+    required this.onSubmit,
+    this.initialSchedule,
+  });
+
+  @override
+  State<_AddScheduleDialog> createState() => _AddScheduleDialogState();
+}
+
+class _AddScheduleDialogState extends State<_AddScheduleDialog> {
+  final _titleController = TextEditingController();
+  final _descController = TextEditingController();
+  final _intervalController = TextEditingController(text: '1');
+  bool _isLunarDate = false;
+  String _repeatType = 'none';
+  int _repeatInterval = 1;
+
+  late final int _lunarYear;
+  late final int _lunarMonth;
+  late final int _lunarDay;
+  late final bool _isLeapMonth;
+  late final String _gapja;
+
+  static const _repeatUnits = [
+    ('none', '없음'),
+    ('daily', '일'),
+    ('weekly', '주'),
+    ('monthly', '월'),
+    ('yearly', '년'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // 수정 모드: 기존 값으로 pre-fill
+    if (widget.initialSchedule case final s?) {
+      _titleController.text = s.title;
+      _descController.text = s.description ?? '';
+      _isLunarDate = s.isLunarDate;
+      _repeatType = s.repeatType;
+      _repeatInterval = s.repeatInterval;
+      _intervalController.text = s.repeatInterval.toString();
+    }
+    klc.setSolarDate(widget.selectedDate.year, widget.selectedDate.month, widget.selectedDate.day);
+    _lunarYear = klc.getLunarYear();
+    _lunarMonth = klc.getLunarMonth();
+    _lunarDay = klc.getLunarDay();
+    _isLeapMonth = klc.isIntercalation;
+    _gapja = klc.getGapjaString();
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descController.dispose();
+    _intervalController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) return;
+    final desc = _descController.text.trim();
+    widget.onSubmit(
+      title: title,
+      description: desc.isEmpty ? null : desc,
+      isLunarDate: _isLunarDate,
+      lunarMonth: _isLunarDate ? _lunarMonth : null,
+      lunarDay: _isLunarDate ? _lunarDay : null,
+      isLeapMonth: _isLunarDate ? _isLeapMonth : false,
+      repeatType: _repeatType,
+      repeatInterval: _repeatInterval,
+    );
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final solarPreview =
+        '${widget.selectedDate.year}년 ${widget.selectedDate.month}월 ${widget.selectedDate.day}일 (양력)';
+    final lunarPreview =
+        '음력 $_lunarYear년 ${_isLeapMonth ? '윤' : ''}$_lunarMonth월 $_lunarDay일  ·  $_gapja년';
+
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.initialSchedule == null ? '일정 추가' : '일정 수정',
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _titleController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: '제목',
+                  hintText: '일정 이름을 입력하세요',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                onSubmitted: (_) => _submit(),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _descController,
+                maxLines: 3,
+                minLines: 2,
+                decoration: const InputDecoration(
+                  labelText: '설명 (선택)',
+                  hintText: '상세 내용을 입력하세요',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('날짜 타입', style: theme.textTheme.labelMedium?.copyWith(color: Colors.black54)),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  ChoiceChip(
+                    label: const Text('양력'),
+                    selected: !_isLunarDate,
+                    onSelected: (_) => setState(() => _isLunarDate = false),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('음력'),
+                    selected: _isLunarDate,
+                    onSelected: (_) => setState(() => _isLunarDate = true),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _isLunarDate ? lunarPreview : solarPreview,
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 16),
+              Text('반복', style: theme.textTheme.labelMedium?.copyWith(color: Colors.black54)),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  if (_repeatType != 'none') ...[
+                    SizedBox(
+                      width: 56,
+                      child: TextField(
+                        controller: _intervalController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                        ),
+                        onChanged: (v) {
+                          final n = int.tryParse(v);
+                          if (n != null && n > 0) {
+                            setState(() => _repeatInterval = n);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _repeatType,
+                      isDense: true,
+                      items: _repeatUnits
+                          .map((u) => DropdownMenuItem(value: u.$1, child: Text(u.$2)))
+                          .toList(),
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() {
+                          _repeatType = v;
+                          if (v == 'none') {
+                            _repeatInterval = 1;
+                            _intervalController.text = '1';
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: _submit,
+                    child: Text(widget.initialSchedule == null ? '추가' : '저장'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -731,6 +1130,285 @@ class _EmptyDetailState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────
+// _CalendarYearView
+// ──────────────────────────────────────────────
+
+class _CalendarYearView extends StatefulWidget {
+  final int year;
+  final int month;
+  final CalendarMode mode;
+  final DateTime today;
+  final AppDatabase db;
+  final ValueChanged<DateTime> onMonthSelected;
+
+  const _CalendarYearView({
+    required this.year,
+    required this.month,
+    required this.mode,
+    required this.today,
+    required this.db,
+    required this.onMonthSelected,
+  });
+
+  @override
+  State<_CalendarYearView> createState() => _CalendarYearViewState();
+}
+
+class _CalendarYearViewState extends State<_CalendarYearView> {
+  static const int _minYear = 1900;
+  static const int _maxYear = 2100;
+
+  late int _selectedYear;
+  int? _selectedMonth;
+  late final FixedExtentScrollController _yearController;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedYear = widget.year;
+    _selectedMonth = widget.month;
+    _yearController = FixedExtentScrollController(initialItem: widget.year - _minYear);
+  }
+
+  @override
+  void dispose() {
+    _yearController.dispose();
+    super.dispose();
+  }
+
+  Widget _monthGrid() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          childAspectRatio: 1.4,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+        ),
+        itemCount: 12,
+        itemBuilder: (context, index) {
+          final month = index + 1;
+          final isThisMonth = widget.today.year == _selectedYear && widget.today.month == month;
+
+          String? lunarLabel;
+          if (widget.mode == CalendarMode.lunar) {
+            klc.setSolarDate(_selectedYear, month, 1);
+            final lm = klc.getLunarMonth();
+            final isLeap = klc.isIntercalation;
+            lunarLabel = '음력 ${isLeap ? '윤' : ''}$lm월';
+          }
+
+          final isSelected = _selectedMonth == month;
+          return InkWell(
+            onTap: () {
+              if (isSelected) {
+                widget.onMonthSelected(DateTime(_selectedYear, month));
+              } else {
+                setState(() => _selectedMonth = month);
+              }
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.blue.shade50
+                    : isThisMonth ? Colors.red.shade50 : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected
+                      ? Colors.blue.shade300
+                      : isThisMonth ? Colors.red.shade300 : Colors.grey.shade200,
+                  width: isSelected || isThisMonth ? 1.5 : 1,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '$month월',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: isThisMonth ? Colors.red.shade600 : Colors.black87,
+                    ),
+                  ),
+                  if (lunarLabel != null) ...[
+                    const SizedBox(height: 2),
+                    Text(lunarLabel, style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _monthScheduleList(int month) {
+    return StreamBuilder<List<(DateTime, Schedule)>>(
+      stream: widget.db.watchSchedulesInMonth(_selectedYear, month),
+      builder: (context, snapshot) {
+        final items = snapshot.data ?? [];
+        if (items.isEmpty) {
+          return Center(
+            child: Text(
+              '$_selectedYear년 $month월 일정 없음',
+              style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+            ),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          itemCount: items.length,
+          separatorBuilder: (_, _) => Divider(
+            height: 1,
+            indent: 16,
+            endIndent: 16,
+            color: Colors.grey.shade100,
+          ),
+          itemBuilder: (context, index) {
+            final (date, schedule) = items[index];
+            return ListTile(
+              dense: true,
+              leading: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '${date.day}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade700,
+                  ),
+                ),
+              ),
+              title: Text(schedule.title, style: const TextStyle(fontSize: 14)),
+              subtitle: (schedule.description?.isNotEmpty ?? false)
+                  ? Text(
+                      schedule.description!,
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : null,
+              onTap: () => widget.onMonthSelected(date),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // 연도 롤러 (좌우 수평 슬라이딩)
+        SizedBox(
+          height: 60,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final availableWidth = constraints.maxWidth;
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  // 중앙 선택 강조 박스
+                  Container(
+                    width: 80,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  OverflowBox(
+                    alignment: Alignment.center,
+                    maxWidth: availableWidth,
+                    maxHeight: availableWidth,
+                    child: RotatedBox(
+                      quarterTurns: 3,
+                      child: SizedBox(
+                        width: 60,
+                        height: availableWidth,
+                        child: ListWheelScrollView.useDelegate(
+                          controller: _yearController,
+                          itemExtent: 80,
+                          perspective: 0.003,
+                          diameterRatio: 8.0,
+                          physics: const FixedExtentScrollPhysics(),
+                          onSelectedItemChanged: (index) => setState(() {
+                            _selectedYear = _minYear + index;
+                            _selectedMonth = null;
+                          }),
+                          childDelegate: ListWheelChildBuilderDelegate(
+                            childCount: _maxYear - _minYear + 1,
+                            builder: (context, index) {
+                              final year = _minYear + index;
+                              final isSelected = year == _selectedYear;
+                              return GestureDetector(
+                                onTap: () => _yearController.animateToItem(
+                                  index,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOut,
+                                ),
+                                child: RotatedBox(
+                                  quarterTurns: 1,
+                                  child: Center(
+                                    child: Text(
+                                      '$year년',
+                                      style: TextStyle(
+                                        fontSize: isSelected ? 20 : 15,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        color: isSelected ? Colors.black87 : Colors.grey.shade400,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        const Divider(height: 1, thickness: 0.5),
+        // 월 그리드 + 일정 목록
+        Expanded(
+          child: Column(
+            children: [
+              Flexible(
+                flex: _selectedMonth != null ? 2 : 1,
+                fit: FlexFit.tight,
+                child: _monthGrid(),
+              ),
+              if (_selectedMonth != null) ...[
+                const Divider(height: 1, thickness: 0.5),
+                Flexible(
+                  fit: FlexFit.tight,
+                  child: _monthScheduleList(_selectedMonth!),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
