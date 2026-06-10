@@ -38,7 +38,6 @@ class AlarmService {
       ),
     );
     await android?.requestNotificationsPermission();
-    await android?.requestExactAlarmsPermission();
   }
 
   static Future<void> schedule(Schedule s) async {
@@ -46,6 +45,14 @@ class AlarmService {
     final parts = s.alarmTime!.split(':');
     final hour = int.parse(parts[0]);
     final minute = int.parse(parts[1]);
+
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final canSchedule = await android?.canScheduleExactNotifications() ?? true;
+    if (!canSchedule) {
+      await android?.requestExactAlarmsPermission();
+      return;
+    }
 
     final targetDate = _nextOccurrence(s, hour, minute);
     if (targetDate == null) return;
